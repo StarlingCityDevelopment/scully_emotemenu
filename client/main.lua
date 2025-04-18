@@ -47,11 +47,13 @@ exports('getLastEmote', GetLastEmote)
 ---Play an emote or scenario
 ---@param data table
 ---@param variation? number
-function PlayEmote(data, variation)
+---@param ped? number
+function PlayEmote(data, variation, ped)
+    ped = ped or cache.ped
     if PlayerState.isLimited then return end
 
     if data.Synchronized and not data.StartSynchronized then
-        local coords = GetEntityCoords(cache.ped)
+        local coords = GetEntityCoords(ped)
         local targetId = lib.getClosestPlayer(coords, 3.0, false)
 
         if not targetId then
@@ -86,13 +88,13 @@ function PlayEmote(data, variation)
     end
 
     if data.PedTypes then
-        if IsPedHuman(cache.ped) then
+        if IsPedHuman(ped) then
             Utils.notify('error', locale('not_valid_ped'))
             return
         end
 
         local isValid = false
-        local model = GetEntityModel(cache.ped)
+        local model = GetEntityModel(ped)
 
         for i = 1, #data.PedTypes do
             local allowed = pedTypes[data.PedTypes[i]]
@@ -110,19 +112,19 @@ function PlayEmote(data, variation)
         end
     end
 
-    if not data.PedTypes and not IsPedHuman(cache.ped) then
+    if not data.PedTypes and not IsPedHuman(ped) then
         Utils.notify('error', locale('not_valid_ped'))
         return
     end
 
-    if Config.enableWeaponBlock and IsPedArmed(cache.ped, 7) then
+    if Config.enableWeaponBlock and IsPedArmed(ped, 7) then
         Utils.notify('error', locale('not_with_weapon'))
         return
     end
 
     if Config.enableAimShootBlock then
         CreateThread(function()
-            while PlayerState.isInEmote and not IsPedRagdoll(cache.ped) do
+            while PlayerState.isInEmote and not IsPedRagdoll(ped) do
                 Wait(0)
 
                 DisableControlAction(0, 25, true)
@@ -252,9 +254,9 @@ function PlayEmote(data, variation)
     if data.Advanced then
         local coords = data.Advanced.Coords
 
-        TaskPlayAnimAdvanced(cache.ped, dictionaryName, animationName, coords.x, coords.y, coords.z, 0, 0, data.Advanced.Heading, 2.0, 2.0, duration or -1, movementFlag, 1.0, false, false)
+        TaskPlayAnimAdvanced(ped, dictionaryName, animationName, coords.x, coords.y, coords.z, 0, 0, data.Advanced.Heading, 2.0, 2.0, duration or -1, movementFlag, 1.0, false, false)
     else
-        TaskPlayAnim(cache.ped, dictionaryName, animationName, 2.0, 2.0, duration or -1, movementFlag, 0, false, false, false)
+        TaskPlayAnim(ped, dictionaryName, animationName, 2.0, 2.0, duration or -1, movementFlag, 0, false, false, false)
     end
 
     RemoveAnimDict(dictionaryName)
@@ -269,7 +271,7 @@ function PlayEmote(data, variation)
             return
         end
 
-        TaskPlayAnim(cache.ped, secondaryEmote.Dictionary, secondaryEmote.Animation, 2.0, 2.0, secondaryEmote.Duration or -1, 51, 0, false, false, false)
+        TaskPlayAnim(ped, secondaryEmote.Dictionary, secondaryEmote.Animation, 2.0, 2.0, secondaryEmote.Duration or -1, 51, 0, false, false, false)
         RemoveAnimDict(secondaryEmote.Dictionary)
     end
 
@@ -316,18 +318,16 @@ function CancelEmote(skipReset)
 
         if not skipReset then
             PlayerState.lastEmote = nil
-            
+
             if exitEmoteName then
                 local exitEmote = ExitEmotes[exitEmoteName]
-
                 PlayEmote(exitEmote)
 
                 if exitEmote?.Options?.Duration then
                     Wait(exitEmote.Options.Duration)
-    
                     goto cancelEmote
                 end
-                
+
                 return
             end
         end
@@ -340,7 +340,8 @@ exports('cancelEmote', CancelEmote)
 ---Play an emote by command
 ---@param command string
 ---@param variant? number
-function PlayEmoteByCommand(command, variant)
+---@param ped? number
+function PlayEmoteByCommand(command, variant, ped)
     local found
 
     for i = 1, #Scenarios do
@@ -355,10 +356,8 @@ function PlayEmoteByCommand(command, variant)
     if not found then
         for i = 1, #Emotes do
             local emotes = Emotes[i]
-    
             for k = 1, #emotes.options do
                 local emote = emotes.options[k]
-    
                 if emote.Command == command then
                     found = emote
                     break
@@ -372,7 +371,7 @@ function PlayEmoteByCommand(command, variant)
         return
     end
 
-    PlayEmote(found, variant)
+    PlayEmote(found, variant, ped)
 end
 exports('playEmoteByCommand', PlayEmoteByCommand)
 
