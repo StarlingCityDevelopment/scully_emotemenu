@@ -107,7 +107,7 @@ lib.addKeybind({
     description = not Config.useCrouchOnly and locale('stance') or locale('crouch'),
     defaultKey = Config.stanceKey,
     onPressed = function()
-        if PlayerState.isLimited or cache.vehicle then return end
+        if PlayerState.isLimited or cache.vehicle or LocalPlayer.state.invBusy then return end
 
         disableStanceControls()
 
