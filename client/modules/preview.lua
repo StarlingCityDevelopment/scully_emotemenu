@@ -119,7 +119,7 @@ function preview.showEmote(data)
     local options = data.Options
 
     if options then
-        duration = options.duration
+        duration = options.Duration
 
         if options.Delay then Wait(options.Delay) end
 
